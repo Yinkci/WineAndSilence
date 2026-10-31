@@ -1,0 +1,12 @@
+# Extra rules added to every image prompt (one per line). Lines starting with # are ignored.
+# The art style itself is in style.txt; things never to draw are in avoid.txt.
+# (The rules of the old zombie series are kept in "old rules (zombie series).txt.bak".)
+CHARACTER DESIGN (copy it exactly from the style examples, it never changes): a perfect round white circle for the head with a clean thin black outline and nothing inside it — no face. Under it, a small gap or a very thin black neck line, then ONE smooth white body shaped like a tall rounded capsule or bean, about one and a half times as tall as the head and slightly narrower than it, with a clean black outline. Two arms and two legs that are single thin black lines of even width, like pen strokes, with no hands, fingers, feet or joints drawn — just slightly rounded ends. Legs come straight down from the bottom of the body; arms come from the top sides of the body.
+The character is drawn clean and simple: smooth flat white with only a soft warm rim of lamp light on one side, no grain, texture, wrinkles, clothes or extra lines on the head or body, so it stays crisp against the textured background.
+Keep the pose simple and readable, like the style examples: standing straight, sitting on a chair or bed edge, head resting on one hand, arms hanging down. Never tangle, cross or bend the limbs into complicated shapes, and never merge an arm into the body.
+The character is never big: at most about a third of the image height, usually smaller. Never fill the frame with the character.
+Only far-away background people may be plain dark silhouettes.
+Feelings are shown only through posture and placement: head resting on a hand, shoulders dropped, sitting alone at a table, standing still, looking out of a window, walking slowly with the head down. Never add a face to show emotion.
+Unless the narration clearly says it is daytime, it is evening or night, lit only by warm amber lamps, windows and street lights.
+Each image has one or two warm light sources at most; everything else stays in deep blue-black shadow.
+Small everyday details tell the story: a cup of tea, an open book, a lit window across the street, rain on the ground, an empty chair.

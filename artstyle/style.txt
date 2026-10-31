@@ -1,0 +1,12 @@
+# The art style for every generated image (replaces StoryCraft's built-in flat-cartoon style).
+# Write it as plain sentences; lines are joined together. Lines starting with # are ignored.
+# Delete this file to go back to the built-in style.
+Quiet, moody night illustration with a cinematic, melancholic feel, like a still frame from a lo-fi animated short.
+Hand-drawn look: fine dark outlines and a soft, grainy, slightly scratchy texture over the whole image.
+The image is mostly deep navy blue and near-black darkness. The only warm light is amber and orange, coming from hanging lamps, windows and street lamps; it pools on tables and floors and reflects softly on polished wood or wet ground.
+Strong contrast between small pools of warm light and cool dark blue shadow; corners, edges and foreground objects fall into near-black.
+Places are detailed and lived-in, whatever they are (indoors or outdoors): real textures, small everyday objects, and at night a few lit windows in the distance.
+Near objects at the edges of the image often fall into dark silhouette, so the viewer seems to be quietly watching from a distance.
+Characters are small in a large, quiet space, with lots of empty room around them.
+Characters are simple faceless stick figures: a plain round white head with a thin dark outline and NO face at all (no eyes, mouth, nose or eyebrows), a simple white rounded body and thin black stick arms and legs.
+Calm, still, lonely and reflective mood.

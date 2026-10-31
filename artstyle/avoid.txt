@@ -1,0 +1,11 @@
+# Things never to draw, one per line (replaces StoryCraft's built-in list). Lines starting with # are ignored.
+# Delete this file to go back to the built-in list.
+faces on the stick figures (eyes, mouths, noses, eyebrows)
+realistic humans or realistic faces
+photorealism, photographs or 3D render
+anime or manga style
+bright daylight, cheerful saturated colors or flat even lighting
+neon colors or colored light other than warm amber
+clean, smooth digital look without grain
+big dramatic action poses
+violence, blood, horror, monsters or zombies

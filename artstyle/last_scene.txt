@@ -1,0 +1,8 @@
+# Rules for the LAST scene of every video only (one per line). Lines starting with # are ignored.
+# Delete this file to treat the last scene like any other.
+This is the closing image of the video: the most melancholic, quiet and reflective moment of all.
+The character is alone, small, and seen from behind (or a three-quarter back view), quietly looking out at something big and far away.
+The PLACE comes from this video's own story and its last line, not from a fixed setup: use where the story ended, or a place that echoes what the last line is about. Do not default to a city skyline at night with lit windows; use one only if the story is actually set in a city at night.
+Vary the setting and the time of day to fit the story, for example: a beach or pier at sunset, an empty road through fields at dusk, a rooftop at first light, a hill above a small town, a rainy bus stop, a lake shore in fog, a snowy street, a quiet train platform, a forest edge under the stars.
+The view takes up most of the image: a wide open sky or landscape fills the frame; the character is only a small figure in the lower part of the image.
+Stillness and space: no other people, nothing happening, lots of empty sky or open space. It should feel like the quiet end of something.

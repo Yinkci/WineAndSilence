@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+python-multipart
+soundfile
+numpy
+# Kokoro itself is not listed: StoryCraft uses the Kokoro already installed on the PC
+# (the `kokoro` + `torch` packages for hexgrad/Kokoro-82M, or kokoro-onnx).

@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StoryCraft — Video Maker</title>
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="logo">SC</span><span>StoryCraft</span></div>
+  <input id="projectName" class="project-name" spellcheck="false" placeholder="Episode name">
+  <span id="dirtyMark" class="dirty" title="Unsaved changes" hidden>●</span>
+  <div class="top-actions">
+    <button class="btn ghost" id="btnNew">New</button>
+    <button class="btn ghost" id="btnOpen">Open…</button>
+    <button class="btn ghost" id="btnSave">Save</button>
+    <button class="btn ghost" id="btnSaveAs">Save as…</button>
+  </div>
+  <div id="health" class="health"></div>
+</header>
+
+<div id="banner" class="banner" hidden></div>
+
+<main class="layout">
+  <section class="scenes-pane">
+    <div class="pane-head">
+      <h2>Scenes <span id="sceneCount" class="count"></span></h2>
+      <div class="pane-tools">
+        <span id="totalDuration" class="muted"></span>
+        <button class="btn primary-soft" id="btnFullScript">📝 Import full script</button>
+        <button class="btn" id="btnBulk">Bulk import</button>
+        <span class="gen-group" title="Generate images with ChatGPT for scenes that have none, in story order">
+          <button class="btn" id="btnGenMissing">🎨 Generate</button>
+          <select id="genCount" class="sm" aria-label="How many images">
+            <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5" selected>5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option><option value="all">all</option>
+          </select>
+          <span class="gen-label">missing</span>
+        </span>
+        <button class="btn" id="btnAddEmpty">+ Empty scene</button>
+      </div>
+    </div>
+    <div id="bulkBar" class="bulk-bar" hidden>
+      <span id="bulkCount">0 selected</span>
+      <button class="btn sm ghost" id="bulkSelectAll">Select all</button>
+      <button class="btn sm ghost" id="bulkClear">Clear</button>
+      <span class="spacer"></span>
+      <button class="btn sm" id="bulkRemoveImages" title="Keep the scenes and narration, remove only their images">🖼 Remove images</button>
+      <button class="btn sm danger" id="bulkDelete">🗑 Delete scenes</button>
+    </div>
+    <div id="sceneList" class="scene-list"></div>
+    <label class="dropzone" id="dropzone">
+      <input type="file" id="addImages" accept=".png,.jpg,.jpeg,.webp" multiple hidden>
+      <strong>Drop scene images here</strong> or click to choose
+      <span class="muted">PNG, JPG, WebP · multiple files are sorted by name (scene_2 before scene_10)</span>
+    </label>
+  </section>
+
+  <section class="preview-pane">
+    <div class="preview-wrap">
+      <div class="preview-stage">
+      <div class="preview-box" id="previewBox">
+        <div class="poster" id="poster">
+          <img id="posterImg" alt="">
+          <div class="poster-caption" id="posterCaption">the world was about to end.</div>
+          <div class="poster-watermark" id="posterWatermark" hidden></div>
+        </div>
+        <video id="previewVideo" controls playsinline hidden></video>
+      </div>
+      </div>
+      <div class="scene-stepper">
+        <button class="icon-btn" id="btnPrevScene" title="Previous scene">◀</button>
+        <span id="sceneStepLabel">Scene 1</span>
+        <span id="capStepLabel" class="cap-step"></span>
+        <button class="icon-btn" id="btnNextScene" title="Next scene">▶</button>
+      </div>
+      <div class="poster-hint" id="posterHint"></div>
+      <div class="preview-tools">
+        <button class="cc-toggle" id="btnSubToggle" role="switch" aria-checked="true" title="Show or hide subtitles in the preview and export">
+          <span class="cc-badge">CC</span><span id="subToggleLabel">Subtitles on</span><span class="switch"><span></span></span>
+        </button>
+        <button class="btn sm pos-toggle" id="btnPosition" title="Drag the subtitles or watermark on a still frame to position them">✥ Adjust positions</button>
+      </div>
+      <div id="previewStale" class="stale" hidden>Project changed since this preview — render again to update.</div>
+    </div>
+  </section>
+
+  <aside class="settings-pane">
+    <div class="settings-head">Settings</div>
+    <div class="settings">
+      <details open>
+        <summary>Voice</summary>
+        <div class="field"><label>Your recording <span class="hint">your own voice-over instead of an AI voice</span></label>
+          <div class="row ep-row"><span id="recName" class="ep-name">No recording — using an AI voice</span>
+            <button class="btn sm" id="btnRecPick">Choose…</button>
+            <button class="icon-btn" id="btnRecClear" title="Stop using the recording (back to an AI voice)" hidden>✕</button></div>
+          <div class="row rec-only"><button class="btn" id="btnRecScenes">🎧 Make scenes from recording</button></div>
+          <p class="muted small rec-only" id="recNote"></p></div>
+        <div class="tts-only">
+        <div class="field"><label>Voice engine</label>
+          <select id="sEngine">
+            <option value="kokoro">Kokoro — on this PC, free</option>
+            <option value="cartesia">Cartesia — online</option>
+            <option value="eleven">ElevenLabs — online</option>
+          </select></div>
+        <div class="field"><label>Voice <span class="hint" id="voiceCount"></span></label><select id="sVoice"></select></div>
+        <div class="field"><label>Reading style</label>
+          <select id="sStyle">
+            <option value="story">Storytelling — the voice chooses its own delivery</option>
+            <option value="poem-calm">Poetry — calm (a little slower, short line pauses)</option>
+            <option value="poem-peaceful">Poetry — peaceful (slower, gentle pauses)</option>
+            <option value="poem-serene">Poetry — serene (slow, long pauses)</option>
+            <option value="poem-sad">Poetry — sad, melancholic (slowest, longest pauses)</option>
+          </select>
+          <p class="muted small">Poetry reads one line at a time: write one line per row and leave a blank line
+            between verses (a longer pause). Each style slows the Speed you set and pauses after every line.
+            The mood is also sent to Cartesia (English voices, subtle); Cartesia voices tagged "Emotive" show it best.</p></div>
+        <div class="field"><label>Speed <output id="oSpeed"></output></label>
+          <input type="range" id="sSpeed" min="0.5" max="2" step="0.05"></div>
+        <div class="row">
+          <button class="btn" id="btnTestVoice">▶ Test voice</button>
+          <span class="muted small" id="voiceNote">Uses your local Kokoro install.</span>
+        </div>
+        <div class="field cloud-key" data-engine="cartesia"><label>Cartesia API key <span class="hint" id="cartesiaState"></span></label>
+          <div class="row"><input type="password" id="cartesiaKey" autocomplete="off" spellcheck="false"
+              placeholder="sk_car_… — paste to add Cartesia voices">
+            <button class="btn sm" id="btnCartesiaSave">Save</button></div>
+          <p class="muted small">Saved only on this PC (config.json). Cartesia speed range is 0.6×–1.5×; uses your Cartesia credits.</p></div>
+        <div class="field cloud-key" data-engine="eleven"><label>ElevenLabs API key <span class="hint" id="elevenState"></span></label>
+          <div class="row"><input type="password" id="elevenKey" autocomplete="off" spellcheck="false"
+              placeholder="sk_… — paste to add ElevenLabs voices">
+            <button class="btn sm" id="btnElevenSave">Save</button></div>
+          <p class="muted small">Saved only on this PC (config.json). ElevenLabs speed range is 0.7×–1.2×; uses your ElevenLabs credits.
+            The key needs the Text to Speech and Voices (read) permissions.</p>
+          <label for="elevenModel">ElevenLabs model</label>
+          <select id="elevenModel"></select></div>
+        </div>
+      </details>
+
+      <details open>
+        <summary>Scene images (ChatGPT)</summary>
+        <div class="ig-status" id="igStatus"><span class="ig-dot"></span><span id="igStatusText">Checking ChatGPT connection…</span>
+          <button class="btn sm" id="btnIgCheck">Check again</button></div>
+        <div class="field"><label>Continues from episode <span class="hint">the episode this one follows</span></label>
+          <div class="row ep-row"><span id="epName" class="ep-name">None — this is the first episode</span>
+            <button class="btn sm" id="btnEpPick">Choose…</button>
+            <button class="icon-btn" id="btnEpClear" title="This episode doesn't continue another one" hidden>✕</button></div>
+          <p class="muted small" id="epInfo" hidden></p></div>
+        <div class="field"><label>The world right now <span class="hint">added to every scene of this episode</span></label>
+          <textarea id="epWorld" rows="3" placeholder="e.g. 3 days into a zombie outbreak: abandoned cars with open doors, trash blowing in the street, broken and boarded-up windows, no traffic, smoke in the distance"></textarea>
+          <p class="muted small">How the places look at this point in the story. It wins over the cleaner places in the style examples and earlier
+            images. A new episode copies it from the one it continues — update it as things get worse.</p></div>
+        <div class="field"><label>Model <span class="hint">the ChatGPT model Codex uses for scene images</span></label>
+          <select id="igModel"><option value="">Codex default</option></select></div>
+        <div class="sub-group">
+          <div class="sub-group-head"><span>Art style</span>
+            <span class="row"><button class="btn sm" id="btnArtRefresh" title="Check the folder again">Refresh</button>
+            <button class="btn sm" id="btnArtOpen" title="Open the artstyle folder">Open folder</button></span></div>
+          <div class="ig-refs" id="artThumbs"></div>
+          <p class="muted small" id="artInfo">Checking the artstyle folder…</p>
+        </div>
+        <div class="sub-group">
+          <div class="sub-group-head"><span>Characters</span><button class="btn sm" id="btnAddCharacter">+ Add character</button></div>
+          <div id="igCharacters" class="ig-chars"></div>
+          <p class="muted small">The <b>main character</b> is in every scene (the "you" of the story). Others are added when the
+            narration mentions their name; you can change this per scene.</p>
+        </div>
+        <label class="toggle"><input type="checkbox" id="igNoText"> No text, captions or speech bubbles in images</label>
+        <div class="field"><label>Places</label>
+          <select id="igPlaces">
+            <option value="new">A new place every scene (quote / life-lesson videos)</option>
+            <option value="story">Continue the story (same place until the narration moves)</option>
+          </select></div>
+        <label class="toggle"><input type="checkbox" id="igUsePrev"> Use the story so far (earlier narration; with "Continue the story" also the previous image)</label>
+        <p class="muted small">Images are always made in 9:16 (vertical).</p>
+        <p class="muted small">Uses your ChatGPT plan through the Codex app (no API key). About a minute per image.</p>
+      </details>
+
+      <details open>
+        <summary>Subtitles</summary>
+        <label class="toggle"><input type="checkbox" id="sSubEnabled"> Burn subtitles into video</label>
+        <div class="field"><label>Font</label><input id="sFont" list="fontList" spellcheck="false"><datalist id="fontList"></datalist></div>
+        <div class="sub-group">
+          <div class="sub-group-head"><span>Position &amp; size</span>
+            <span class="row"><button class="btn sm" id="btnSubCenter" title="Center horizontally">Center</button>
+            <button class="btn sm" id="btnSubReset" title="Default size and position">Reset</button></span></div>
+          <div class="field"><label>Font size</label>
+            <div class="slider-num"><input type="range" id="sSize" min="20" max="200" step="1"><input type="number" class="num" data-for="sSize" min="20" max="200" step="1"><span class="unit">px</span></div></div>
+          <div class="field"><label>Horizontal position (X) <span class="hint">0 = left · 50 = center · 100 = right</span></label>
+            <div class="slider-num"><input type="range" id="sPosX" min="0" max="100" step="0.5"><input type="number" class="num" data-for="sPosX" min="0" max="100" step="0.5"><span class="unit">%</span></div></div>
+          <div class="field"><label>Vertical position (Y) <span class="hint">0 = bottom · 100 = top</span></label>
+            <div class="slider-num"><input type="range" id="sPos" min="0" max="92" step="0.5"><input type="number" class="num" data-for="sPos" min="0" max="92" step="0.5"><span class="unit">%</span></div></div>
+          <div class="field"><label>Caption width <span class="hint">longer lines wrap inside this width</span></label>
+            <div class="slider-num"><input type="range" id="sMaxW" min="30" max="100" step="1"><input type="number" class="num" data-for="sMaxW" min="30" max="100" step="1"><span class="unit">%</span></div></div>
+          <p class="muted small">Tip: drag the caption on the preview to move it.</p>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Words per caption <output id="oWords"></output></label><input type="range" id="sWords" min="2" max="8" step="1"></div>
+          <div class="field"><label>Outline <output id="oOutline"></output></label><input type="range" id="sOutline" min="0" max="14" step="0.5"></div>
+          <div class="field"><label>Shadow <output id="oShadow"></output></label><input type="range" id="sShadow" min="0" max="8" step="0.5"></div>
+        </div>
+        <div class="row colors">
+          <label class="color">Text <input type="color" id="sColor"></label>
+          <label class="color">Outline <input type="color" id="sOutlineColor"></label>
+          <label class="toggle"><input type="checkbox" id="sBold"> Bold</label>
+          <label class="toggle"><input type="checkbox" id="sItalic"> Italic</label>
+          <label class="toggle"><input type="checkbox" id="sUpper"> UPPERCASE</label>
+        </div>
+      </details>
+
+
+
+      <details open>
+        <summary>Watermark</summary>
+        <label class="toggle"><input type="checkbox" id="wEnabled"> Show watermark</label>
+        <div class="field"><label>Text</label><input id="wText" spellcheck="false" placeholder="@StoryCraft"></div>
+        <div class="sub-group">
+          <div class="sub-group-head"><span>Position</span><span class="muted small" id="wAnchorName"></span></div>
+          <div class="wm-pos">
+            <div class="anchor-grid" id="wAnchorGrid" role="group" aria-label="Watermark position"><button data-anchor="tl" title="Top left"></button><button data-anchor="tc" title="Top center"></button><button data-anchor="tr" title="Top right"></button><button data-anchor="ml" title="Middle left"></button><button data-anchor="c" title="Center"></button><button data-anchor="mr" title="Middle right"></button><button data-anchor="bl" title="Bottom left"></button><button data-anchor="bc" title="Bottom center"></button><button data-anchor="br" title="Bottom right"></button></div>
+            <div class="wm-xy">
+              <div class="field"><label>X <span class="hint">0 = left · 100 = right</span></label><div class="slider-num"><input type="range" id="wPosX" min="0" max="100" step="0.5"><input type="number" class="num" data-for="wPosX" min="0" max="100" step="0.5"><span class="unit">%</span></div></div>
+              <div class="field"><label>Y <span class="hint">0 = top · 100 = bottom</span></label><div class="slider-num"><input type="range" id="wPosY" min="0" max="100" step="0.5"><input type="number" class="num" data-for="wPosY" min="0" max="100" step="0.5"><span class="unit">%</span></div></div>
+            </div>
+          </div>
+          <p class="muted small">Pick a spot, fine-tune with X / Y, or drag the watermark on the preview.</p>
+        </div>
+        <div class="field"><label>Size</label><div class="slider-num"><input type="range" id="wSize" min="12" max="160" step="1"><input type="number" class="num" data-for="wSize" min="12" max="160" step="1"><span class="unit">px</span></div></div>
+        <div class="field"><label>Opacity</label><div class="slider-num"><input type="range" id="wOpacity" min="5" max="100" step="1"><input type="number" class="num" data-for="wOpacity" min="5" max="100" step="1"><span class="unit">%</span></div></div>
+        <div class="field"><label>Font</label><input id="wFont" list="fontList" spellcheck="false"></div>
+        <div class="grid2">
+          <div class="field"><label>Outline <output id="oWOutline"></output></label><input type="range" id="wOutline" min="0" max="8" step="0.5"></div>
+          <div class="field"><label>Shadow <output id="oWShadow"></output></label><input type="range" id="wShadow" min="0" max="6" step="0.5"></div>
+        </div>
+        <div class="row colors">
+          <label class="color">Text <input type="color" id="wColor"></label>
+          <label class="color">Outline <input type="color" id="wOutlineColor"></label>
+          <label class="toggle"><input type="checkbox" id="wBold"> Bold</label>
+          <label class="toggle"><input type="checkbox" id="wItalic"> Italic</label>
+        </div>
+      </details>
+
+      <details open class="tts-only">
+        <summary>Background music</summary>
+        <label class="toggle"><input type="checkbox" id="mEnabled"> Play background music</label>
+        <div class="field"><label>Music file <span class="hint">loops for the whole video</span></label>
+          <div class="row ep-row"><span id="mName" class="ep-name">No music chosen</span>
+            <button class="btn sm" id="btnMusicPick">Choose…</button>
+            <button class="icon-btn" id="btnMusicPlay" title="Listen" hidden>▶</button>
+            <button class="icon-btn" id="btnMusicClear" title="Remove the music" hidden>✕</button></div></div>
+        <div class="field"><label>Volume <span class="hint">under the narration</span></label><div class="slider-num"><input type="range" id="mVolume" min="0" max="100" step="1"><input type="number" class="num" data-for="mVolume" min="0" max="100" step="1"><span class="unit">%</span></div></div>
+        <div class="field"><label>Fade out at the end</label><div class="slider-num"><input type="range" id="mFade" min="0" max="10" step="0.5"><input type="number" class="num" data-for="mFade" min="0" max="10" step="0.5"><span class="unit">s</span></div></div>
+        <label class="toggle"><input type="checkbox" id="mDuck"> Lower the music while the narrator speaks</label>
+        <p class="muted small">Heard in Preview video and the exported MP4.</p>
+      </details>
+
+      <details>
+        <summary>Color grade</summary>
+        <div class="field"><label>Look</label><select id="cLook"></select></div>
+        <div class="field" id="lutRow"><label>Your own .cube file</label>
+          <div class="row ep-row"><span id="lutName" class="ep-name">None — original colors</span>
+            <button class="btn sm" id="btnLutPick">Choose…</button>
+            <button class="icon-btn" id="btnLutClear" title="Remove the color grade" hidden>✕</button></div></div>
+        <div class="field"><label>Strength</label><div class="slider-num"><input type="range" id="cStrength" min="0" max="100" step="1"><input type="number" class="num" data-for="cStrength" min="0" max="100" step="1"><span class="unit">%</span></div></div>
+        <p class="muted small">Seen in Preview video and the exported MP4 (not in the still preview). Captions and watermark keep their own colors.</p>
+      </details>
+
+      <details>
+        <summary>Motion &amp; transitions</summary>
+        <div class="grid2">
+          <div class="field"><label>Default movement</label><select id="sMotion"></select></div>
+          <div class="field"><label>Strength</label>
+            <select id="sIntensity"><option value="subtle">Subtle</option><option value="medium">Medium</option><option value="strong">Strong</option></select></div>
+        </div>
+        <div class="field"><label>Fit mode</label>
+          <select id="sFit">
+            <option value="contain">Contain — whole image, black bars if needed</option>
+            <option value="cover">Cover — fill frame (crops edges)</option>
+          </select></div>
+        <div class="grid2">
+          <div class="field"><label>Transition between scenes</label><select id="sTransition"></select></div>
+          <div class="field"><label>Transition length <output id="oTransDur"></output></label><input type="range" id="sTransDur" min="0.2" max="3" step="0.05"></div>
+          <div class="field"><label>Fade in from black <output id="oFadeIn"></output></label><input type="range" id="sFadeIn" min="0" max="3" step="0.1"></div>
+          <div class="field"><label>Fade out to black <output id="oFadeOut"></output></label><input type="range" id="sFadeOut" min="0" max="3" step="0.1"></div>
+        </div>
+        <p class="muted small">Each scene can pick its own transition to the next scene (the menu next to its movement).
+          Fade out also fades the music; the end of the video is held long enough that speech is never faded.</p>
+      </details>
+
+      <details class="tts-only">
+        <summary>Timing</summary>
+        <div class="grid2">
+          <div class="field"><label>Pause between scenes <output id="oPause"></output></label><input type="range" id="sPause" min="0" max="2" step="0.05"></div>
+          <div class="field"><label>Pause between sentences <output id="oSentPause"></output></label><input type="range" id="sSentPause" min="0" max="1" step="0.05"></div>
+          <div class="field"><label>Lead-in before narration <output id="oLead"></output></label><input type="range" id="sLead" min="0" max="1" step="0.05"></div>
+          <div class="field"><label>Hold at the end <output id="oEnd"></output></label><input type="range" id="sEnd" min="0.2" max="4" step="0.1"></div>
+          <div class="field"><label>Image-only scene length <output id="oSilent"></output></label><input type="range" id="sSilent" min="0.5" max="8" step="0.5"></div>
+        </div>
+        <p class="muted small">Scene length = lead-in + measured narration + pause. Transitions always happen inside the pause, so speech is never cut.</p>
+      </details>
+
+      <details>
+        <summary>Export</summary>
+        <div class="field"><label>Output folder</label>
+          <div class="row"><input id="sOutDir" spellcheck="false"><button class="btn" id="btnBrowse">Browse…</button></div></div>
+        <div class="field"><label>File name</label><input id="sFilename" spellcheck="false" placeholder="Uses the episode name"></div>
+        <div class="grid3">
+          <div class="field"><label>Resolution</label><select id="sResP"><option value="1080">1080p</option><option value="720">720p</option></select></div>
+          <div class="field"><label>Frame rate</label><select id="sFps"><option>24</option><option>30</option><option>60</option></select></div>
+          <div class="field"><label>Quality</label><select id="sQuality"><option value="standard">Standard</option><option value="high">High</option><option value="max">Maximum</option></select></div>
+        </div>
+        <p class="muted small" id="exportHint"></p>
+        <div class="cache-row">
+          <span class="muted small" id="cacheInfo">Cache: …</span>
+          <button class="btn sm" id="btnClearCache" title="Delete cached scene clips and previews. They are rebuilt automatically on the next render.">Clear video cache</button>
+        </div>
+      </details>
+      <div class="defaults-row">
+        <button class="btn" id="btnSaveDefaults" title="New projects start with these settings (voice, subtitles, watermark, color grade, motion, transitions, export…)">⭐ Save these settings as my default</button>
+        <button class="btn sm" id="btnResetDefaults" title="New projects start with StoryCraft's original settings again">Reset</button>
+      </div>
+    </div>
+  </aside>
+</main>
+
+<footer class="bottombar">
+  <button class="btn primary-soft" id="btnNarrate">🎙 Generate narration</button>
+  <button class="btn primary-soft" id="btnPreview">▶ Preview video</button>
+  <button class="btn primary" id="btnExport">⬇ Export MP4</button>
+  <div class="progress-area">
+    <div class="progress-text" id="progressText">Ready.</div>
+    <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+  <button class="btn danger" id="btnCancel" hidden>Cancel</button>
+</footer>
+
+<!-- Bulk import -->
+<div class="modal" id="bulkModal" hidden>
+  <div class="modal-card wide">
+    <div class="modal-head"><h3>Bulk import</h3><button class="icon-btn" data-close>✕</button></div>
+    <div class="bulk-grid">
+      <div>
+        <label class="dropzone small" id="bulkDrop">
+          <input type="file" id="bulkImages" accept=".png,.jpg,.jpeg,.webp" multiple hidden>
+          <strong>1. Choose images</strong> (sorted by name)
+          <span class="muted" id="bulkImgCount">No images yet</span>
+        </label>
+        <div class="field"><label>2. Paste narration scripts</label>
+          <textarea id="bulkText" rows="12" spellcheck="true" placeholder="SCENE 1&#10;At 8:43 PM, the world was about to end. Unfortunately, you had absolutely no idea.&#10;&#10;SCENE 2&#10;You were sitting on your couch, eating the last slice of pizza…"></textarea></div>
+        <p class="muted small">Separate scenes with lines like <code>SCENE 1</code>, <code>Scene 2:</code>, <code>[3]</code> or <code>---</code>. Without markers, blank lines separate scenes. <code>Image: scene_01.png</code> lines pick a specific image.</p>
+      </div>
+      <div>
+        <div class="pair-head"><strong>3. Check the pairing</strong><span class="muted small" id="pairSummary"></span></div>
+        <div id="pairList" class="pair-list"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <label class="toggle"><input type="checkbox" id="bulkReplace"> Replace current scenes</label>
+      <div class="spacer"></div>
+      <button class="btn ghost" data-close>Cancel</button>
+      <button class="btn primary" id="bulkAdd">Add scenes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Full script import -->
+<div class="modal" id="scriptModal" hidden>
+  <div class="modal-card wide tall">
+    <div class="modal-head"><h3>Import full script</h3><button class="icon-btn" data-close>✕</button></div>
+    <div class="script-grid">
+      <div class="script-left">
+        <textarea id="fullScript" spellcheck="true" placeholder="Paste your whole narration here.&#10;&#10;With scene labels:&#10;SCENE 1&#10;At 8:43 PM, the world was about to end…&#10;&#10;SCENE 2&#10;You were sitting on your couch…&#10;&#10;…or just paste the continuous story. It will be divided across your scenes in order."></textarea>
+        <div class="script-stats" id="scriptStats"></div>
+        <button class="btn primary" id="btnAutoAssign">Auto assign to scenes →</button>
+      </div>
+      <div class="script-right">
+        <div id="assignNote" class="assign-note" hidden></div>
+        <div id="assignWarnings" class="assign-warnings" hidden></div>
+        <div id="assignList" class="assign-list"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span id="wordCheck" class="muted small"></span>
+      <div class="spacer"></div>
+      <button class="btn ghost" data-close>Cancel</button>
+      <button class="btn primary" id="btnApplyScript" disabled>Apply to scenes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Scene image generation -->
+<div class="modal" id="imgModal" hidden>
+  <div class="modal-card wide">
+    <div class="modal-head"><h3 id="imgTitle">Scene image</h3><button class="icon-btn" data-close>✕</button></div>
+    <div class="img-grid">
+      <div class="img-compare">
+        <figure><figcaption>Current</figcaption><div class="img-frame" id="imgCurrent"></div></figure>
+        <figure><figcaption>New</figcaption><div class="img-frame" id="imgNew"><span class="muted small">Click Generate</span></div></figure>
+        <div class="img-attempts" id="imgAttempts"></div>
+      </div>
+      <div class="img-side">
+        <div class="field"><label>What to draw <span class="hint">starts from this scene's narration — edit freely</span></label>
+          <textarea id="imgPrompt" rows="9" spellcheck="true"></textarea></div>
+        <details class="img-full"><summary>Full prompt sent to ChatGPT</summary><pre id="imgFullPrompt"></pre></details>
+        <div class="field"><label>Camera shot <span class="hint">changes every scene so images don't repeat</span></label>
+          <select id="imgShot"></select></div>
+        <div class="field" id="imgCharsField"><label>Characters who can appear</label><div class="img-chars" id="imgChars"></div></div>
+        <div class="img-refs-used" id="imgRefsUsed"></div>
+        <p class="muted small" id="imgRefNote"></p>
+        <div class="img-progress" id="imgProgress" hidden><span class="spinner"></span><span id="imgProgressText">Generating…</span></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span class="muted small" id="imgStatusLine"></span>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="imgCancel" hidden>Stop</button>
+      <button class="btn" id="imgGenerate">🎨 Generate</button>
+      <button class="btn primary" id="imgUse" disabled>Use this image</button>
+    </div>
+  </div>
+</div>
+
+<!-- Messages -->
+<div class="modal" id="msgModal" hidden>
+  <div class="modal-card">
+    <div class="modal-head"><h3 id="msgTitle"></h3><button class="icon-btn" data-close>✕</button></div>
+    <div class="msg-body" id="msgBody"></div>
+    <div class="modal-foot"><div class="spacer"></div><span id="msgExtra"></span><button class="btn primary" id="msgOk" data-close>OK</button></div>
+  </div>
+</div>
+
+<div id="toast" class="toast" hidden></div>
+<audio id="player" hidden></audio>
+<input type="file" id="replaceInput" accept=".png,.jpg,.jpeg,.webp" hidden>
+
+<template id="sceneTpl">
+  <article class="scene">
+    <div class="scene-index">
+      <input type="checkbox" class="bulk-check" title="Select (Shift+click to select a range)">
+      <span class="handle" title="Drag to reorder">⋮⋮</span>
+      <span class="num"></span>
+    </div>
+    <div class="thumb" title="Click or drop an image to replace">
+      <img alt="">
+      <div class="thumb-empty">Drop image<br>or click</div>
+      <div class="thumb-missing">⚠ Image missing<br><u>Locate…</u></div>
+      <button class="thumb-remove" title="Remove image (keeps the narration)">✕</button>
+    </div>
+    <div class="scene-body">
+      <div class="scene-meta"><span class="filename"></span><span class="stats muted"></span></div>
+      <textarea class="script" rows="4" placeholder="Narration for this scene. It is spoken by Kokoro and used for the subtitles."></textarea>
+      <div class="scene-controls">
+        <button class="btn sm act-play" title="Hear this scene's narration">▶ Narration</button>
+        <button class="btn sm act-image" title="Generate this scene's image with ChatGPT">🎨 Image</button>
+        <select class="motion sm" title="Camera movement for this scene"></select>
+        <select class="trans sm" title="Transition to the next scene"></select>
+        <span class="duration" title="Scene length (from the generated narration)">—</span>
+        <span class="rec-tools rec-only">
+          <button class="icon-btn act-earlier" title="Start this scene a little earlier (0.1 s)">◂</button>
+          <button class="icon-btn act-later" title="Start this scene a little later (0.1 s)">▸</button>
+          <button class="icon-btn act-split" title="Split this scene where the text cursor is">✂</button>
+          <button class="icon-btn act-merge" title="Join this scene with the next one">⤓</button>
+        </span>
+        <span class="scene-icons">
+        <button class="icon-btn act-up" title="Move up">↑</button>
+        <button class="icon-btn act-down" title="Move down">↓</button>
+        <button class="icon-btn act-replace" title="Replace image">🖼</button>
+        <button class="icon-btn act-dup" title="Duplicate scene">⧉</button>
+        <button class="icon-btn act-del" title="Delete scene">🗑</button>
+        </span>
+      </div>
+    </div>
+  </article>
+</template>
+
+<script src="/static/script_split.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>
