@@ -283,7 +283,8 @@ def _run_job(job, project):
         if job.kind == "transcribe":
             rec = recording.of(project) or {}
             heard = recording.transcribe(rec.get("file", ""), job)
-            job.result = {**heard, "parts": recording.make_scenes(heard["words"])}
+            parts = recording.scenes_for(heard["words"], heard["duration"], merged_settings(project)["transition"])
+            job.result = {**heard, "parts": parts}
         elif job.kind == "narrate":
             scenes = project.get("scenes") or []
             if not scenes:

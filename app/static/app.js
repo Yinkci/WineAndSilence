@@ -1441,7 +1441,7 @@ async function makeScenesFromRecording() {
   if (state.job) return;
   const has = state.project.scenes.some((s) => (s.script || "").trim() || s.image);
   if (has && !(await confirmBox("Make scenes from your recording?",
-    "The scenes' text is replaced by what you say in the recording, one scene per sentence. Images you already have stay, in order.",
+    "The scenes' text is replaced by what you say in the recording, one scene per sentence (with a slow transition, sentences are joined so scenes stay on screen longer, keeping at least 4 scenes). Images you already have stay, in order.",
     "Make scenes"))) return;
   startJob("transcribe");
 }

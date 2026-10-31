@@ -2,7 +2,7 @@
 
 The recording (voice, often with music under it) plays unchanged from start to end as the video's
 soundtrack. Whisper (faster-whisper, already on this PC) writes down every word with its time;
-that turns the recording into scenes (one per sentence) and times the captions. Each scene keeps
+that turns the recording into scenes (one per sentence, or more with a slow fade) and times the captions. Each scene keeps
 `rec_start`, the second in the recording where it begins; it ends where the next scene begins.
 """
 import hashlib
@@ -132,9 +132,34 @@ def refine_words(words, audio):
     return out
 
 
-def make_scenes(words):
+MIN_SCENES = 4      # joining sentences for a slow fade never leaves fewer scenes than this
+
+
+def scenes_for(words, duration, transition):
+    """make_scenes with the longest minimum scene the transition asks for that still gives
+    MIN_SCENES scenes (a short recording may give fewer)."""
+    want = min_scene_for(transition)
+    parts = make_scenes(words, duration, want)
+    while len(parts) < MIN_SCENES and want > MIN_SCENE:
+        want = max(MIN_SCENE, want - 0.25)
+        parts = make_scenes(words, duration, want)
+    return parts
+
+
+def min_scene_for(transition):
+    """Shortest scene on screen: with a fade, a scene must stay long enough to be seen between its
+    fade in and fade out (3x the fade), so slow fades never make the picture blink every few seconds."""
+    if not transition or transition.get("type") == "cut":
+        return MIN_SCENE
+    return max(MIN_SCENE, 3 * float(transition.get("duration") or 0))
+
+
+def make_scenes(words, duration=None, min_scene=MIN_SCENE):
     """One scene per sentence: short ones join the next, long ones split at a pause.
-    Returns [{"script", "start"}]; a scene starts halfway through the pause before its first word."""
+    A scene counts as short when it is on screen (from its first word to the next scene's first word)
+    for less than min_scene. Returns [{"script", "start"}]; a scene starts halfway through the pause
+    before its first word."""
+    max_scene = max(MAX_SCENE, 2 * min_scene)
     sentences, cur = [], []
     for w in words:
         cur.append(w)
@@ -146,11 +171,11 @@ def make_scenes(words):
     span = lambda ws: ws[-1][2] - ws[0][1]      # noqa: E731
 
     def split(ws):
-        if span(ws) <= MAX_SCENE or len(ws) < 4:
+        if span(ws) <= max_scene or len(ws) < 4:
             return [ws]
         mid = (ws[0][1] + ws[-1][2]) / 2
         # Only cuts that leave both parts long enough (a shorter part would be joined back right away).
-        fits = [k for k in range(1, len(ws)) if span(ws[:k]) >= MIN_SCENE and span(ws[k:]) >= MIN_SCENE]
+        fits = [k for k in range(1, len(ws)) if span(ws[:k]) >= min_scene and span(ws[k:]) >= min_scene]
         if not fits:
             return [ws]
         # Best cut: after a comma near the middle; otherwise the longest silence between two words.
@@ -160,13 +185,14 @@ def make_scenes(words):
         return split(ws[:k]) + split(ws[k:])
 
     pieces = [p for s in sentences for p in split(s)]
+    end = max(duration or 0, words[-1][2]) if words else 0
     merged = []
     for p in pieces:
-        if merged and span(merged[-1]) < MIN_SCENE:
+        if merged and p[0][1] - merged[-1][0][1] < min_scene:    # the last scene, up to where p starts
             merged[-1] = merged[-1] + p
         else:
             merged.append(p)
-    if len(merged) > 1 and span(merged[-1]) < MIN_SCENE:   # a very short last line joins the one before
+    if len(merged) > 1 and end - merged[-1][0][1] < min_scene:   # a very short last line joins the one before
         merged[-2:] = [merged[-2] + merged[-1]]
     out = []
     for i, ws in enumerate(merged):
